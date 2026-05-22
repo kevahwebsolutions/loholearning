@@ -267,6 +267,25 @@
     #mobile-menu { display: none; }
     #mobile-menu.open { display: block; }
   </style>
+  <!-- WhatsApp widget styles -->
+  <style>
+    /* Floating WhatsApp button */
+    .whatsapp-fab { position: fixed; right: 16px; bottom: 20px; z-index: 220; }
+    .whatsapp-fab button { background: var(--red); color: white; border-radius: 999px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: none; cursor:pointer; }
+
+    /* Chat box */
+    .whatsapp-chatbox { position: fixed; right: 16px; bottom: 86px; z-index: 220; width:320px; max-width:calc(100% - 32px); background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); overflow: hidden; }
+    .whatsapp-chatbox .wa-header { background: var(--red); color: white; padding: 10px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .whatsapp-chatbox .wa-header .title { font-weight:700; }
+    .whatsapp-chatbox textarea { width:100%; border:none; padding:12px; resize:vertical; min-height:96px; outline:none; font-family: inherit; }
+    .whatsapp-chatbox .wa-actions { padding:10px; display:flex; gap:8px; align-items:center; }
+    .whatsapp-chatbox .wa-actions .btn { flex:1; }
+
+    @media (max-width: 420px) {
+      .whatsapp-chatbox { right: 12px; left: 12px; width: auto; bottom: 80px; }
+      .whatsapp-fab { right: 12px; bottom: 16px; }
+    }
+  </style>
 </head>
 
 <body class="antialiased">
@@ -917,8 +936,59 @@
   </div>
 </footer>
 
+<!-- WhatsApp floating button -->
+<div id="whatsapp-fab" class="whatsapp-fab">
+  <button id="wa-open" aria-label="Open WhatsApp chat" title="Chat with us" onclick="toggleWhatsApp()">
+    <i class="fab fa-whatsapp" style="font-size:20px"></i>
+  </button>
+</div>
+
+<div id="whatsapp-chatbox" class="whatsapp-chatbox hidden" aria-hidden="true">
+  <div class="wa-header">
+    <div class="title">Chat with LoHo</div>
+    <button onclick="toggleWhatsApp()" aria-label="Close chat" style="background:transparent;border:none;color:white;font-size:18px;">&times;</button>
+  </div>
+  <div style="padding:8px;">
+    <textarea id="wa-message" placeholder="Write a message..." aria-label="Message"></textarea>
+    <div class="wa-actions">
+      <button class="btn-red btn" id="wa-send">Send</button>
+      <button class="btn-outline" onclick="document.getElementById('wa-message').value='';">Clear</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== SCRIPTS ===================== -->
 <script>
+// WhatsApp widget behavior
+const _waPhone = '254797349396';
+function toggleWhatsApp(){
+  const box = document.getElementById('whatsapp-chatbox');
+  if(!box) return;
+  box.classList.toggle('hidden');
+  const hidden = box.classList.contains('hidden');
+  box.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+  if(!hidden){
+    const ta = document.getElementById('wa-message'); if(ta) ta.focus();
+  }
+}
+function sendWhatsAppMessage(){
+  const ta = document.getElementById('wa-message');
+  let text = (ta && ta.value) ? ta.value.trim() : '';
+  if(!text) text = 'Hello, I am interested in LoHo Learning.';
+  const encoded = encodeURIComponent(text);
+  const waLink = `https://wa.me/${_waPhone}?text=${encoded}`;
+  window.open(waLink, '_blank');
+  const box = document.getElementById('whatsapp-chatbox'); if(box) box.classList.add('hidden');
+}
+
+// Attach events after DOM ready
+document.addEventListener('DOMContentLoaded', function(){
+  const sendBtn = document.getElementById('wa-send');
+  if(sendBtn) sendBtn.addEventListener('click', function(e){ e.preventDefault(); sendWhatsAppMessage(); });
+  const ta = document.getElementById('wa-message');
+  if(ta) ta.addEventListener('keydown', function(e){ if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendWhatsAppMessage(); }});
+});
+
   // Navbar scroll — compact bar, blur, contrast (throttled + runs on load / resize)
   const navbar = document.getElementById('navbar');
   let navbarTicking = false;
